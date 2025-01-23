@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Untitled</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Coin Flip Game</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() {
+      // Replace with your EmailJS public key
+      emailjs.init("YOUR_PUBLIC_KEY");
+    })();
+  </script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background: url('download (5).jpeg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    #header {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(5px);
+    }
+
+    #timer {
+      font-size: 3em;
+      font-weight: bold;
+      color: #00ff88;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+      margin: 20px 0;
+    }
+
+    .coins {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .coin {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #ffd700, #ffa500);
+      border-radius: 50%;
+      border: 4px solid #fff;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+
+    .coin::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.5)
+      );
+      transform: rotate(45deg);
+      transition: all 0.3s ease;
+    }
+
+    .coin:hover {
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    }
+
+    .coin:hover::before {
+      transform: rotate(45deg) translate(50%, 50%);
+    }
+
+    .flipped {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      border-color: #2ecc71;
+    }
+
+    #popup, #walletPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #popup input, #walletPopup input {
+      margin: 5px;
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+
+    #walletIcon {
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+
+    #history {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      max-width: 400px;
+      margin: 30px auto;
+    }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+
+    .valid {
+      color: orange;
+      font-weight: bold;
+    }
+
+    #messageBox {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px;
+      background-color: #333;
+      color: white;
+      border-radius: 5px;
+      display: none;
+      animation: slideIn 0.3s ease-in-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .result-item {
+      background: rgba(255, 255, 255, 0.1);
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 4px solid #00ff88;
+    }
+
+    #soundControl {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 255, 136, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      font-size: 1.2em;
+      box-shadow: 0 2px 10px rgba(0, 255, 136, 0.2);
+    }
+
+    #soundControl:hover {
+      transform: scale(1.1);
+      background: rgba(0, 255, 136, 0.3);
+    }
+
+    .volume-slider {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      width: 100px;
+      height: 40px;
+      background: rgba(0, 255, 136, 0.2);
+      border-radius: 20px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 255, 136, 0.2);
+    }
+
+    #volumeControl {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      background: rgba(0, 255, 136, 0.3);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    #volumeControl::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #00ff88;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #volumeControl::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Styled Wallet Popup */
+    #walletPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+      padding: 25px;
+      border-radius: 50%;
+      width: 300px;
+      height: 300px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      text-align: center;
+      z-index: 1000;
+    }
+
+    #walletPopup h3 {
+      color: #00ff88;
+      margin-bottom: 30px;
+      font-size: 1.5em;
+    }
+
+    #walletPopup button {
+      width: 80%;
+      margin: 10px auto;
+      padding: 12px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: linear-gradient(145deg, #00ff88, #00cc6a);
+      color: white;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+
+    #walletPopup button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Add Funds Popup */
+    #addFundsPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+      padding: 25px;
+      border-radius: 50%;
+      width: 300px;
+      height: 300px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      z-index: 1000;
+      text-align: center;
+    }
+
+    #addFundsPopup h3 {
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+
+    #addFundsPopup input {
+      width: 80%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #00ff88;
+      border-radius: 25px;
+      background: rgba(0,0,0,0.2);
+      color: white;
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    #addFundsPopup input:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+    }
+
+    #addFundsPopup button {
+      width: 80%;
+      margin: 10px auto;
+      padding: 12px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: linear-gradient(145deg, #00ff88, #00cc6a);
+      color: white;
+    }
+
+    #addFundsPopup button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Wallet Icon Animation */
+    #walletIcon {
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-block;
+      padding: 10px;
+      background: rgba(0, 255, 136, 0.1);
+      border-radius: 50%;
+    }
+
+    #walletIcon:hover {
+      transform: scale(1.1) rotate(10deg);
+      background: rgba(0, 255, 136, 0.2);
+    }
+
+    /* Error Message Style */
+    .error-message {
+      color: #ff4444;
+      margin: 10px 0;
+      font-size: 0.9em;
+    }
+
+    /* Styled Withdrawal Form */
+    #withdrawalPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+      padding: 30px;
+      border-radius: 20px;
+      width: 320px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      z-index: 1000;
+      color: white;
+    }
+
+    #withdrawalPopup h3 {
+      color: #00ff88;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.5em;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+
+    .form-group {
+      margin: 15px 0;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #00ff88;
+      font-size: 0.9em;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid rgba(0, 255, 136, 0.3);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #00ff88;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    }
+
+    .withdrawal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .withdrawal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    #submitWithdrawal {
+      background: linear-gradient(145deg, #00ff88, #00cc6a);
+      color: white;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+
+    #cancelWithdrawal {
+      background: linear-gradient(145deg, #ff4444, #cc3333);
+      color: white;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+
+    .withdrawal-buttons button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Thank You Popup Styling */
+    #thankYouPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+      padding: 30px;
+      border-radius: 20px;
+      width: 300px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      z-index: 1000;
+    }
+
+    #thankYouPopup h2 {
+      color: #00ff88;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+
+    #thankYouPopup p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    #thankYouPopup button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #00ff88, #00cc6a);
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #thankYouPopup button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Investment Popup Styles */
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+      padding: 30px;
+      border-radius: 20px;
+      width: 320px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      z-index: 1000;
+      color: white;
+      text-align: center;
+    }
+
+    #popup h3 {
+      color: #00ff88;
+      margin-bottom: 25px;
+      font-size: 1.5em;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+
+    .investment-group {
+      margin: 15px 0;
+      text-align: left;
+    }
+
+    .investment-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #00ff88;
+      font-size: 1em;
+      font-weight: 500;
+    }
+
+    .investment-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid rgba(0, 255, 136, 0.3);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 1.1em;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .investment-group input:focus {
+      outline: none;
+      border-color: #00ff88;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    }
+
+    .investment-group input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .investment-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .investment-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    #submit {
+      background: linear-gradient(145deg, #00ff88, #00cc6a);
+      color: white;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+
+    #cancel {
+      background: linear-gradient(145deg, #ff4444, #cc3333);
+      color: white;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+
+    .investment-buttons button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* Quick Amount Buttons */
+    .quick-amounts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+      justify-content: center;
+    }
+
+    .quick-amount-btn {
+      padding: 8px 15px;
+      border: 2px solid rgba(0, 255, 136, 0.3);
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .quick-amount-btn:hover {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: #00ff88;
+      transform: scale(1.05);
+    }
+
+    /* Error Message */
+    .investment-error {
+      color: #ff4444;
+      font-size: 0.9em;
+      margin-top: 5px;
+      display: none;
+    }
+
+    /* Add styles for invested amount display */
+    .coin-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .invested-amount {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 255, 136, 0.2);
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.9em;
+      color: #00ff88;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .coin-container:hover .invested-amount {
+      opacity: 1;
+    }
+
+    /* Responsive styles */
+    :root {
+      --coin-size: 120px;
+      --coin-font-size: 2em;
+    }
+
+    @media screen and (max-width: 768px) {
+      :root {
+        --coin-size: 80px;
+        --coin-font-size: 1.5em;
+      }
+
+      .container {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 1.5em;
+        margin: 10px 0;
+      }
+
+      #timer {
+        font-size: 2em;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      :root {
+        --coin-size: 60px;
+        --coin-font-size: 1.2em;
+      }
+
+      .coins {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .coin-container {
+        margin: 5px;
+      }
+    }
+
+    /* Updated coin styles */
+    .coin {
+      width: var(--coin-size);
+      height: var(--coin-size);
+      font-size: var(--coin-font-size);
+    }
+
+    /* Responsive popup styles */
+    #popup, #walletPopup, #addFundsPopup, #withdrawalPopup, #thankYouPopup {
+      width: 90%;
+      max-width: 320px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Mobile-friendly form inputs */
+    .investment-group input,
+    .form-group input {
+      font-size: 16px; /* Prevents zoom on mobile */
+      padding: 12px;
+    }
+
+    /* Mobile-friendly buttons */
+    .quick-amounts {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .quick-amount-btn {
+      padding: 8px 12px;
+      font-size: 0.9em;
+      min-width: 70px;
+    }
+
+    /* Mobile header */
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* Wallet display for mobile */
+    .wallet-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 255, 136, 0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      margin: 5px;
+    }
+
+    /* Sound controls for mobile */
+    #soundControl {
+      top: 10px;
+      right: 10px;
+      width: 35px;
+      height: 35px;
+      font-size: 1.2em;
+    }
+
+    .volume-slider {
+      top: 55px;
+      right: 10px;
+      width: 80px;
+      height: 35px;
+    }
+
+    /* History section for mobile */
+    #history {
+      max-height: 150px;
+      overflow-y: auto;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 0.9em;
+    }
+
+    /* Add touch-friendly styles */
+    .touch-friendly {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Improved button styles for mobile */
+    button {
+      min-height: 44px;
+      padding: 12px 20px;
+      margin: 5px;
+      font-size: 1em;
+    }
+
+    /* Add some texture and depth */
+    .game-container {
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 1200px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Improve readability for text elements */
+    h1, h2, h3, p {
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Add responsive adjustments */
+    @media screen and (max-width: 768px) {
+      body {
+        background-attachment: scroll; /* Better mobile performance */
+      }
+      
+      .game-container {
+        margin: 10px;
+        padding: 15px;
+      }
+    }
+
+    /* Optimize background loading */
+    @media (prefers-reduced-data: reduce) {
+      body {
+        background-size: contain;
+        background-attachment: initial;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="soundControl" onclick="toggleSound()">🔊</div>
+  <div class="volume-slider">
+    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <audio id="bgMusic" loop>
+    <source src="showreel-music-promo-advertising-opener-vlog-background-intro-theme-261601.mp3" type="audio/mp3">
+  </audio>
+  
+  <div class="container">
+    <h1>Coin Flip Game</h1>
+    <div id="header">
+      <span id="selection">No selection yet</span>
+      <span id="wallet">Wallet: ₹<span id="walletBalance">1000</span> <span id="walletIcon">💰</span></span>
+    </div>
+    <div id="timer">30</div>
+    <div class="coins">
+      <div class="coin-container">
+        <div class="coin" id="coin1">1</div>
+        <div class="invested-amount" id="invested1">₹0</div>
+      </div>
+      <div class="coin-container">
+        <div class="coin" id="coin2">2</div>
+        <div class="invested-amount" id="invested2">₹0</div>
+      </div>
+      <div class="coin-container">
+        <div class="coin" id="coin3">3</div>
+        <div class="invested-amount" id="invested3">₹0</div>
+      </div>
+      <div class="coin-container">
+        <div class="coin" id="coin4">4</div>
+        <div class="invested-amount" id="invested4">₹0</div>
+      </div>
+      <div class="coin-container">
+        <div class="coin" id="coin5">5</div>
+        <div class="invested-amount" id="invested5">₹0</div>
+      </div>
+    </div>
+    <div id="history">
+      <h3>Latest Results:</h3>
+      <p id="result1"></p>
+      <p id="result2"></p>
+      <p id="result3"></p>
+    </div>
+    <div id="popup">
+      <h3>Place Your Bet</h3>
+      <div class="investment-group">
+        <label for="amount">Amount (₹)</label>
+        <input type="number" id="amount" placeholder="Enter betting amount" min="1" required>
+        <div class="quick-amounts">
+          <div class="quick-amount-btn" data-amount="100">₹100</div>
+          <div class="quick-amount-btn" data-amount="500">₹500</div>
+          <div class="quick-amount-btn" data-amount="1000">₹1000</div>
+        </div>
+        <div class="investment-error" id="amountError"></div>
+      </div>
+      <div class="investment-group">
+        <label for="quantity">Quantity</label>
+        <input type="number" id="quantity" placeholder="Enter quantity" min="1" value="1" required>
+        <div class="investment-error" id="quantityError"></div>
+      </div>
+      <div class="investment-buttons">
+        <button id="submit">Confirm Bet</button>
+        <button id="cancel">Cancel</button>
+      </div>
+    </div>
+    <div id="walletPopup">
+      <h3>Wallet Actions</h3>
+      <button id="addFunds">Add Funds</button>
+      <button id="withdrawFunds">Withdraw Funds</button>
+    </div>
+    <div id="withdrawalPopup">
+      <h3>Request Withdrawal</h3>
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" placeholder="Enter your full name" required>
+      </div>
+      <div class="form-group">
+        <label for="withdrawAmount">Amount (₹)</label>
+        <input type="number" id="withdrawAmount" placeholder="Enter amount" min="1" required>
+      </div>
+      <div class="form-group">
+        <label for="bankAccount">Bank Account Number</label>
+        <input type="text" id="bankAccount" placeholder="Enter account number" required>
+      </div>
+      <div class="form-group">
+        <label for="ifscCode">IFSC Code</label>
+        <input type="text" id="ifscCode" placeholder="Enter IFSC code" required>
+      </div>
+      <div class="form-group">
+        <label for="upiId">UPI ID</label>
+        <input type="text" id="upiId" placeholder="Enter UPI ID" required>
+      </div>
+      <div class="withdrawal-buttons">
+        <button id="submitWithdrawal">Submit</button>
+        <button id="cancelWithdrawal">Cancel</button>
+      </div>
+    </div>
+    <div id="thankYouPopup">
+      <h2>Thank You!</h2>
+      <p>Your withdrawal request has been submitted successfully.</p>
+      <p>Amount: ₹<span id="confirmedAmount"></span></p>
+      <p>The money will be transferred to your account within 24 hours.</p>
+      <button onclick="closeThankYouPopup()">Close</button>
+    </div>
+    <div id="overlay"></div>
+    <div id="messageBox"></div>
+    <div id="addFundsPopup">
+      <h3>Add Funds</h3>
+      <input type="number" id="addAmount" placeholder="Enter amount (min ₹100)" min="100" step="100">
+      <div id="amountError" class="error-message"></div>
+      <button id="confirmAdd">Add Funds</button>
+      <button id="cancelAdd">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const coins = document.querySelectorAll(".coin");
+      const timerElement = document.getElementById("timer");
+      const walletBalanceElement = document.getElementById("walletBalance");
+      const selectionElement = document.getElementById("selection");
+      const resultHistory = document.getElementById("history");
+      const walletIcon = document.getElementById("walletIcon");
+      const popup = document.getElementById("popup");
+      const walletPopup = document.getElementById("walletPopup");
+      const overlay = document.getElementById("overlay");
+  
+      let timer = 30;
+      let walletBalance = parseInt(localStorage.getItem("walletBalance")) || 1000; // Load wallet balance from localStorage or set default to 1000
+      let hasInvested = false;
+      let investments = {};
+      let interval;
+  
+      // Update wallet balance display
+      walletBalanceElement.textContent = walletBalance;
+  
+      // Initialize coins with investment tracking
+      coins.forEach((coin) => {
+        investments[coin.textContent] = 0;
+      });
+  
+      const updateTimer = () => {
+        timerElement.textContent = timer;
+      };
+  
+      const resetGame = () => {
+        timer = 30;
+        hasInvested = false;
+        investments = {};
+        coins.forEach((coin) => {
+          coin.classList.remove("flipped");
+          investments[coin.textContent] = 0;
+        });
+        selectionElement.textContent = "No selection yet";
+        startGame(); // Make sure to start the game after reset
+      };
+  
+      const pickWinner = () => {
+        const minInvestmentCoin = Object.entries(investments).reduce((min, current) => {
+          return current[1] < min[1] ? current : min;
+        })[0]; // Find the coin with the minimum investment
+  
+        const winner = Array.from(coins).find((coin) => coin.textContent === minInvestmentCoin);
+        winner.classList.add("flipped");
+        selectionElement.textContent = `Winner: ${winner.textContent}`;
+        resultHistory.innerHTML = `<p>${winner.textContent} - Win</p>` + resultHistory.innerHTML;
+        speak(`The winning coin is ${winner.textContent}`);
+        winSound.play();
+  
+        // Process payouts
+        processPayouts(winner.textContent);
+      };
+  
+      const showMessage = (message, duration = 3000) => {
+        const messageBox = document.getElementById('messageBox');
+        messageBox.textContent = message;
+        messageBox.style.display = 'block';
+        setTimeout(() => {
+          messageBox.style.display = 'none';
+        }, duration);
+      };
+  
+      const processPayouts = (winningCoin) => {
+        coins.forEach((coin) => {
+          if (coin.textContent === winningCoin) {
+            if (investments[winningCoin] > 0) {
+              const winAmount = investments[winningCoin] * 2;
+              walletBalance += winAmount;
+              walletBalanceElement.textContent = walletBalance;
+              localStorage.setItem("walletBalance", walletBalance);
+              showMessage(`Congratulations! You won ₹${winAmount}`);
+              const rect = coin.getBoundingClientRect();
+              createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+          }
+        });
+      };
+  
+      const startGame = () => {
+        interval = setInterval(() => {
+          timer -= 1;
+          updateTimer();
+          if (timer === 0) {
+            clearInterval(interval);
+            pickWinner();
+            setTimeout(resetGame, 5000);
+          }
+        }, 1000);
+      };
+  
+      const speak = (text) => {
+        const speech = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(speech);
+      };
+  
+      coins.forEach((coin) => {
+        coin.addEventListener("click", () => {
+          if (!hasInvested) {
+            coinFlipSound.play();
+            popup.style.display = "block";
+            overlay.style.display = "block";
+            document.getElementById("submit").onclick = () => {
+              const amount = parseInt(document.getElementById("amount").value);
+              const quantity = parseInt(document.getElementById("quantity").value) || 1;
+              
+              if (isNaN(amount) || amount <= 0 || amount * quantity > walletBalance) {
+                showMessage("Invalid amount. Check your wallet balance.");
+                return;
+              }
+              
+              walletBalance -= amount * quantity;
+              walletBalanceElement.textContent = walletBalance;
+              investments[coin.textContent] += amount * quantity;
+              hasInvested = true;
+              showMessage(`Invested ₹${amount * quantity} on Coin ${coin.textContent}`);
+              selectionElement.textContent = `Selected Coin: ${coin.textContent}`;
+              localStorage.setItem("walletBalance", walletBalance);
+              
+              popup.style.display = "none";
+              overlay.style.display = "none";
+            };
+            
+            document.getElementById("cancel").onclick = () => {
+              popup.style.display = "none";
+              overlay.style.display = "none";
+            };
+          } else {
+            showMessage("You can invest only once per round!");
+          }
+        });
+      });
+  
+      walletIcon.addEventListener("click", () => {
+        walletPopup.style.display = "block";
+        overlay.style.display = "block";
+      });
+  
+      document.getElementById("addFunds").addEventListener("click", () => {
+        walletPopup.style.display = "none";
+        document.getElementById("addFundsPopup").style.display = "block";
+      });
+  
+      document.getElementById("withdrawFunds").addEventListener("click", () => {
+        if (walletBalance <= 0) {
+          showMessage("Insufficient balance to withdraw");
+          return;
+        }
+  
+        // Hide wallet popup and show withdrawal form
+        walletPopup.style.display = "none";
+        document.getElementById("withdrawalPopup").style.display = "block";
+        overlay.style.display = "block";
+      });
+  
+      document.getElementById("submitWithdrawal").addEventListener("click", async () => {
+        const fullName = document.getElementById("fullName").value;
+        const withdrawAmount = parseInt(document.getElementById("withdrawAmount").value);
+        const bankAccount = document.getElementById("bankAccount").value;
+        const ifscCode = document.getElementById("ifscCode").value;
+        const upiId = document.getElementById("upiId").value;
+        
+        if (!fullName || !withdrawAmount || !bankAccount || !ifscCode || !upiId) {
+          showMessage("Please fill in all fields");
+          return;
+        }
+        
+        if (withdrawAmount > walletBalance) {
+          showMessage("Insufficient balance");
+          return;
+        }
+        
+        if (withdrawAmount < 1) {
+          showMessage("Minimum withdrawal amount is ₹1");
+          return;
+        }
+
+        // Show loading state
+        const submitButton = document.getElementById("submitWithdrawal");
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = "Processing...";
+        submitButton.disabled = true;
+
+        try {
+          // Send withdrawal request email
+          const response = await emailjs.send(
+            "YOUR_SERVICE_ID", // Replace with your EmailJS service ID
+            "YOUR_TEMPLATE_ID", // Replace with your EmailJS template ID
+            {
+              to_name: "Admin", // The admin who receives the email
+              from_name: fullName,
+              amount: withdrawAmount,
+              bank_account: bankAccount,
+              ifsc_code: ifscCode,
+              upi_id: upiId,
+              wallet_balance: walletBalance,
+              timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              user_email: "admin@yourdomain.com" // Replace with your admin email
+            }
+          );
+
+          if (response.status === 200) {
+            // Deduct amount from wallet
+            walletBalance -= withdrawAmount;
+            walletBalanceElement.textContent = walletBalance;
+            localStorage.setItem("walletBalance", walletBalance);
+            
+            // Show thank you popup
+            document.getElementById("withdrawalPopup").style.display = "none";
+            document.getElementById("confirmedAmount").textContent = withdrawAmount;
+            document.getElementById("thankYouPopup").style.display = "block";
+            
+            // Reset form
+            document.getElementById("fullName").value = "";
+            document.getElementById("withdrawAmount").value = "";
+            document.getElementById("bankAccount").value = "";
+            document.getElementById("ifscCode").value = "";
+            document.getElementById("upiId").value = "";
+          } else {
+            throw new Error('Email failed to send');
+          }
+          
+        } catch (error) {
+          showMessage("Error submitting withdrawal request. Please try again.");
+          console.error("Withdrawal request error:", error);
+        } finally {
+          // Reset button state
+          submitButton.textContent = originalButtonText;
+          submitButton.disabled = false;
+        }
+      });
+  
+      function closeThankYouPopup() {
+        document.getElementById("thankYouPopup").style.display = "none";
+        overlay.style.display = "none";
+      }
+  
+      document.getElementById("cancelWithdrawal").addEventListener("click", () => {
+        document.getElementById("withdrawalPopup").style.display = "none";
+        overlay.style.display = "none";
+        // Reset all form fields
+        document.getElementById("fullName").value = "";
+        document.getElementById("withdrawAmount").value = "";
+        document.getElementById("bankAccount").value = "";
+        document.getElementById("ifscCode").value = "";
+        document.getElementById("upiId").value = "";
+      });
+  
+      document.getElementById("confirmAdd").addEventListener("click", () => {
+        const amount = parseInt(document.getElementById("addAmount").value);
+        const errorDiv = document.getElementById("amountError");
+        
+        if (!amount || amount < 100) {
+          errorDiv.textContent = "Minimum amount is ₹100";
+          return;
+        }
+        
+        const options = {
+          key: "rzp_live_05tQ1JOuX37UDs",
+          amount: amount * 100, // Convert to paise
+          currency: "INR",
+          name: "Coin Flip Game",
+          description: "Add Funds to Wallet",
+          handler: function (response) {
+            walletBalance += amount;
+            walletBalanceElement.textContent = walletBalance;
+            localStorage.setItem("walletBalance", walletBalance);
+            showMessage(`₹${amount} added to your wallet!`);
+            document.getElementById("addFundsPopup").style.display = "none";
+            document.getElementById("addAmount").value = "";
+            overlay.style.display = "none";
+            
+            // Add particle effect for successful fund addition
+            const walletIcon = document.getElementById("walletIcon");
+            const rect = walletIcon.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+          },
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+      });
+  
+      document.getElementById("cancelAdd").addEventListener("click", () => {
+        document.getElementById("addFundsPopup").style.display = "none";
+        document.getElementById("addAmount").value = "";
+        document.getElementById("amountError").textContent = "";
+        overlay.style.display = "none";
+      });
+  
+      // Add input validation
+      document.getElementById("addAmount").addEventListener("input", (e) => {
+        const amount = parseInt(e.target.value);
+        const errorDiv = document.getElementById("amountError");
+        
+        if (!amount || amount < 100) {
+          errorDiv.textContent = "Minimum amount is ₹100";
+        } else {
+          errorDiv.textContent = "";
+        }
+      });
+  
+      // Add particle effect for wallet icon when balance updates
+      function updateWalletBalance(newBalance) {
+        const walletIcon = document.getElementById("walletIcon");
+        const rect = walletIcon.getBoundingClientRect();
+        createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        
+        walletBalance = newBalance;
+        walletBalanceElement.textContent = newBalance;
+        localStorage.setItem("walletBalance", newBalance);
+      }
+  
+      // Start the game...
+      startGame();
+
+      // Add quick amount selection functionality
+      document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const amount = btn.dataset.amount;
+          document.getElementById('amount').value = amount;
+          validateAmount();
+        });
+      });
+
+      // Add validation functions
+      function validateAmount() {
+        const amount = parseInt(document.getElementById('amount').value);
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const amountError = document.getElementById('amountError');
+        const total = amount * quantity;
+
+        if (!amount || amount < 1) {
+          amountError.textContent = 'Please enter a valid amount';
+          amountError.style.display = 'block';
+          return false;
+        }
+
+        if (total > walletBalance) {
+          amountError.textContent = 'Insufficient balance';
+          amountError.style.display = 'block';
+          return false;
+        }
+
+        amountError.style.display = 'none';
+        return true;
+      }
+
+      function validateQuantity() {
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const quantityError = document.getElementById('quantityError');
+
+        if (!quantity || quantity < 1) {
+          quantityError.textContent = 'Quantity must be at least 1';
+          quantityError.style.display = 'block';
+          return false;
+        }
+
+        quantityError.style.display = 'none';
+        return true;
+      }
+
+      // Update the submit button click handler
+      document.getElementById('submit').addEventListener('click', () => {
+        if (validateAmount() && validateQuantity()) {
+          const amount = parseInt(document.getElementById('amount').value);
+          const quantity = parseInt(document.getElementById('quantity').value);
+          
+          // Your existing bet submission code here
+          walletBalance -= amount * quantity;
+          walletBalanceElement.textContent = walletBalance;
+          investments[selectedCoin] += amount * quantity;
+          hasInvested = true;
+          
+          // Add animation effect
+          const coinElement = document.getElementById(`coin${selectedCoin}`);
+          const rect = coinElement.getBoundingClientRect();
+          createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+          
+          // Close popup
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+      });
+
+      // Add input validation listeners
+      document.getElementById('amount').addEventListener('input', validateAmount);
+      document.getElementById('quantity').addEventListener('input', validateQuantity);
+    });
+
+    let isSoundOn = false;
+    let bgMusic = document.getElementById('bgMusic');
+    const soundControl = document.getElementById('soundControl');
+    const volumeSlider = document.querySelector('.volume-slider');
+    const volumeControl = document.getElementById('volumeControl');
+
+    function toggleSound() {
+      if (isSoundOn) {
+        bgMusic.pause();
+        soundControl.textContent = '🔈';
+        volumeSlider.style.display = 'none';
+      } else {
+        try {
+          const playPromise = bgMusic.play();
+          if (playPromise !== undefined) {
+            playPromise.then(_ => {
+              soundControl.textContent = '🔊';
+              volumeSlider.style.display = 'flex';
+            })
+            .catch(error => {
+              console.error("Audio playback error:", error);
+              showMessage("Click again to enable sound");
+            });
+          }
+        } catch (error) {
+          console.error("Audio system error:", error);
+          showMessage("Audio playback not supported");
+        }
+      }
+      isSoundOn = !isSoundOn;
+    }
+
+    // Ensure audio is loaded properly
+    document.addEventListener('DOMContentLoaded', () => {
+      bgMusic.load();
+      
+      // Add error handling for audio loading
+      bgMusic.addEventListener('error', (e) => {
+        console.error("Audio loading error:", e);
+        showMessage("Background music failed to load");
+      });
+    });
+
+    // Enable sound on first interaction
+    document.addEventListener('click', function initAudio() {
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.then(_ => {
+          isSoundOn = true;
+          soundControl.textContent = '🔊';
+          volumeSlider.style.display = 'flex';
+        }).catch(error => {
+          console.log("Initial playback prevented:", error);
+        });
+      }
+      document.removeEventListener('click', initAudio);
+    }, { once: true });
+
+    // Improved volume control
+    volumeControl.addEventListener('input', (e) => {
+      const newVolume = parseFloat(e.target.value);
+      bgMusic.volume = newVolume;
+      
+      // Update icon based on volume level
+      if (newVolume === 0) {
+        soundControl.textContent = '🔇';
+      } else if (newVolume < 0.5) {
+        soundControl.textContent = '🔈';
+      } else {
+        soundControl.textContent = '🔊';
+      }
+      
+      // Save volume preference
+      localStorage.setItem('gameVolume', newVolume);
+    });
+
+    // Load saved volume preference
+    window.addEventListener('load', () => {
+      const savedVolume = localStorage.getItem('gameVolume');
+      if (savedVolume !== null) {
+        bgMusic.volume = parseFloat(savedVolume);
+        volumeControl.value = savedVolume;
+      }
+    });
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (isSoundOn) bgMusic.pause();
+      } else {
+        if (isSoundOn) bgMusic.play();
+      }
+    });
+
+    // Add sound effects
+    const coinFlipSound = new Audio('https://www.soundjay.com/misc/sounds/coin-flip-1.mp3');
+    const winSound = new Audio('https://www.soundjay.com/misc/sounds/achievement-bell-1.mp3');
+    const betSound = new Audio('https://www.soundjay.com/misc/sounds/coin-drop-1.mp3');
+
+    // Add animation class for coins
+    document.querySelectorAll('.coin').forEach(coin => {
+      coin.addEventListener('mouseover', () => {
+        coin.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
+      });
+      
+      coin.addEventListener('mouseout', () => {
+        coin.style.transform = 'rotate(0deg)';
+      });
+    });
+
+    // Add particle effects for winning
+    function createParticles(x, y) {
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.width = '5px';
+        particle.style.height = '5px';
+        particle.style.background = '#00ff88';
+        particle.style.borderRadius = '50%';
+        document.body.appendChild(particle);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 5 + Math.random() * 5;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        let opacity = 1;
+
+        const animate = () => {
+          particle.style.left = (parseFloat(particle.style.left) + vx) + 'px';
+          particle.style.top = (parseFloat(particle.style.top) + vy) + 'px';
+          opacity -= 0.02;
+          particle.style.opacity = opacity;
+
+          if (opacity > 0) {
+            requestAnimationFrame(animate);
+          } else {
+            particle.remove();
+          }
+        };
+
+        requestAnimationFrame(animate);
+      }
+    }
+
+    // Add touch event handlers
+    document.querySelectorAll('.coin').forEach(coin => {
+      coin.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent double-tap zoom
+        coin.classList.add('touch-active');
+      });
+
+      coin.addEventListener('touchend', () => {
+        coin.classList.remove('touch-active');
+      });
+    });
+
+    // Prevent zoom on input focus for iOS
+    document.addEventListener('gesturestart', (e) => {
+      e.preventDefault();
+    });
+
+    // Improve mobile scrolling
+    document.querySelectorAll('.scrollable').forEach(element => {
+      element.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
+      });
+    });
+
+    // Handle orientation change
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        adjustLayout();
+      }, 200);
+    });
+
+    function adjustLayout() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    // Call on load
+    adjustLayout();
+
+    // Improve button feedback on mobile
+    document.querySelectorAll('button').forEach(button => {
+      button.addEventListener('touchstart', () => {
+        button.style.transform = 'scale(0.95)';
+      });
+
+      button.addEventListener('touchend', () => {
+        button.style.transform = 'scale(1)';
+      });
+    });
+
+    // Add swipe to close for popups
+    let touchStartY = 0;
+    const popups = document.querySelectorAll('.popup');
+
+    popups.forEach(popup => {
+      popup.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+
+      popup.addEventListener('touchmove', (e) => {
+        const touchY = e.touches[0].clientY;
+        const diff = touchY - touchStartY;
+
+        if (diff > 50) { // Swipe down threshold
+          popup.style.display = 'none';
+          overlay.style.display = 'none';
+        }
+      });
+    });
+
+    // Improve mobile performance
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Optimize animations for mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    function createParticles(x, y) {
+      const particleCount = isMobile ? 15 : 30; // Reduce particles on mobile
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.width = '5px';
+        particle.style.height = '5px';
+        particle.style.background = '#00ff88';
+        particle.style.borderRadius = '50%';
+        document.body.appendChild(particle);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 5 + Math.random() * 5;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        let opacity = 1;
+
+        const animate = () => {
+          particle.style.left = (parseFloat(particle.style.left) + vx) + 'px';
+          particle.style.top = (parseFloat(particle.style.top) + vy) + 'px';
+          opacity -= 0.02;
+          particle.style.opacity = opacity;
+
+          if (opacity > 0) {
+            requestAnimationFrame(animate);
+          } else {
+            particle.remove();
+          }
+        };
+
+        requestAnimationFrame(animate);
+      }
+    }
+
+    // Add fast click for better mobile response
+    document.addEventListener('touchstart', function() {}, false);
+
+    // Add background image preloading
+    document.addEventListener('DOMContentLoaded', () => {
+      const img = new Image();
+      img.src = 'download (5).jpeg';
+      img.onload = () => {
+        document.body.style.opacity = '1';
+      };
+    });
+
+    // Add fallback if image fails to load
+    window.addEventListener('error', (e) => {
+      if (e.target.tagName === 'IMG' || e.target.tagName === 'BODY') {
+        document.body.style.backgroundColor = '#1a1a1a'; // Fallback background color
+      }
+    }, true);
+  </script>
+</body>
+</html>
